@@ -1,14 +1,28 @@
+/*
+
+File Name: game.js
+Author: Robin Calamatta
+Last Modified by: Robin Calamatta
+Date Last Modified: DEC 10, 2014
+Description: This is the main javascript file, this starts by loading the canvas, then all of the assets, such as audio and sprites/spritesheets.
+            All of the variables are defined for the game which are used throughout the game. The game consists of a human player who wanders around avoiding 
+            enemies, there are three types of enemies, one which, if touched, deals 5 damage. One which, if touched deals 10 damage, and then one which deals                   100 damage. The player's objective is to collect all of the surviving sprites on the map while avoiding the threats. there are two powerups for health  
+            , one is a health pack and one is a armour, giving 100 and 150 health. The player can check instructions by walking into the instructions button or                 start the game in the same way. All of the player stats are displayed in the top left corner and when the player dies he is granted the ability to reset             the game by pressing the space bar.
+
+*/
+
+
 var game = new Phaser.Game(1000, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 var level = 1;
+
+//preloading all of the assets
 function preload() {
 
 //load the images
     //game.load.image('hero', 'assets/sprites/bus.png');
     game.load.image('road', 'assets/backgrounds/A-road.jpg');
-        
-    
     game.load.spritesheet('innocent', 'assets/sprites/swordguy.png', 48, 32);
-    game.load.spritesheet('ibutton', 'assets/buttons/ibutton.png', 262, 62);
+    game.load.spritesheet('ibutton', 'assets/buttons/iButton.png', 262, 62);
     game.load.spritesheet('button', 'assets/buttons/startButton.png', 264, 80);
     game.load.spritesheet('hero', 'assets/sprites/links.png', 80, 40);
     game.load.spritesheet('minion', 'assets/sprites/zombieChick.png', 90, 69);
@@ -29,17 +43,22 @@ function preload() {
     game.load.image('armour', 'assets/powerups/armour.png');
     game.load.image('pauseMenu', 'assets/menus/pauseMenu.png');
     game.load.spritesheet('zombieDie', 'assets/sprites/zombieDying.png', 100, 100);
+    game.load.image('bullet', 'assets/sprites/bullet.png');
     
 }
+//declare the arrow keys
 var upKey;
 var downKey;
 var leftKey;
 var rightKey;
-var pauseButton;
+var restartButton;
 
-    
+var bullets;
+var nextFire = 0;
+var fireRate = 200;
 
 //declare all variables
+var bossHealth = 100;
 var pickup;
 var cheer
 var healthPack;
@@ -55,7 +74,7 @@ var innocentsLeft = 0;
 var zombiesLeft = 0;
 var minions;
 var minions2;
-var health = 100;
+var lives = 5;
 var angels;
 
 //sound
@@ -69,12 +88,10 @@ var zombieSound;
 
 
 var button;
-var ibutton;
+var iButton;
 
 
-var time = 0;
-var timer;
-var timer2;
+
 var play = 0;
 var pause_label;
 //dying animation variables
@@ -87,20 +104,22 @@ var score = 0;
 
 
 
-    
+    //create the game
 function create() {
-    pauseButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-    upKey = game.input.keyboard.addKey(Phaser.Keyboard.UP);
-    downKey = game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
-    leftKey = game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-    rightKey = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+    
+    restartButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    upKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
+    downKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+    leftKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
+    rightKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+    
+    
     
     //play theme music
-    timer = game.time.create(false);
-    timer2 = game.time.create(false);
-    music = game.add.audio('theme');
+    music = game.add.audio('theme',1,true);
     music.volume=0.3;
     
+    //add all of the audio files to the game
     zombieDieGuy = game.add.audio('zombieDieGuy');
     cheer = game.add.audio('cheer');
     cheer.volume = 0.2;
@@ -113,6 +132,8 @@ function create() {
     savior.volume=1.0;
     zombieSound = game.add.audio('zombieSound');
     zombieSound.volume = 0.1;
+    
+    //play the zombie sounds
     zombieSound.play();
     
     
@@ -143,9 +164,8 @@ function create() {
     
     //add the minions to the collision group
     
-    
-    minions = game.add.group();
-    minions.enableBody = true;
+    //minions = game.add.group();
+    //minions.enableBody = true;
 
     for (var i = 0; i < numberOfBaddies; i++)
     {
@@ -160,9 +180,9 @@ function create() {
     }
     
     
-    
-   minions2 = game.add.group();
-    minions2.enableBody = true;
+    //add the minions to the collision group
+   // minions2 = game.add.group();
+    //minions2.enableBody = true;
     
     for (var i = 0; i < numberOfBaddies2; i++)
     {
@@ -185,6 +205,16 @@ function create() {
    boss.body.collideWorldBounds = true;
    boss.animations.add('move');
    boss.animations.play('move', 5, true);
+
+    //  Our bullet group
+    bullets = game.add.group();
+    bullets.enableBody = true;
+    bullets.physicsBodyType = Phaser.Physics.ARCADE;
+    bullets.createMultiple(30, 'bullet', 0, false);
+    bullets.setAll('anchor.x', 0.5);
+    bullets.setAll('anchor.y', 0.5);
+    bullets.setAll('outOfBoundsKill', true);
+    bullets.setAll('checkWorldBounds', true);
     
     
     
@@ -206,28 +236,30 @@ function create() {
     
     //make the camera follow the sprite
     game.camera.follow(hero);
-    //game.camera.deadzone = new Phaser.Rectangle(400, 200, 200, 300);
-    //game.camera.focusOnXY(0, 0);
     
     
+    //add the start button
    button = group.create(game.world.centerX/2, 300, 'button', 40);
    button.anchor.setTo(0.5, 0.5);
    button.enablebody = true;
     button.body.collideWorldBounds = true;
         button.body.immovable = true;
     
-    
+    //add the instructions button
     iButton = group.create(game.world.centerX/2, 500, 'ibutton', 45);
    iButton.anchor.setTo(0.5, 0.5);
    iButton.enablebody = true;
         iButton.body.immovable = true;
     iButton.body.collideWorldBounds = true;
     
+    //randomly place one health pack at a random time
     for(var i = 0; i<1; i++){
         
         setTimeout(function(){ createHealth(); }, game.rnd.integerInRange(10000, 100000));
            
     }
+    
+    //randomly place one health pack at a random time
     function createHealth(){
     healthPack = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'healthPack', 70);
            healthPack.anchor.setTo(0.5, 0.5);
@@ -236,11 +268,15 @@ function create() {
         healthPack.body.immovable = true;
     }
     
+    
+    //randomly place one armour pack at a random time
     for(var i = 0; i<1; i++){
         
         setTimeout(function(){ createArmour(); }, game.rnd.integerInRange(10000, 100000));
            
     }
+    
+    //randomly place one armour pack at a random time
     function createArmour(){
     armour = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'armour', 80);
            armour.anchor.setTo(0.5, 0.5);
@@ -248,10 +284,12 @@ function create() {
            armour.body.collideWorldBounds = true;
         armour.body.immovable = true;
     }
+    
+    
+    //make the innocent people to be picked up and add animation
    for (var i = 0; i < 10; i++)
     {
         
-        //make the innocent people to be picked up and add animation
         var c = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'innocent', 17);
         c.name='innocent'+i;
         c.body.immovable = true;
@@ -261,6 +299,8 @@ function create() {
         innocentsLeft++;
         
     }
+    
+    //make the innocent people to be picked up and add animation
     for (var i = 0; i < 10; i++)
     {
         
@@ -319,9 +359,13 @@ function create() {
    
 }
 
+//start the update function, the game loop
 function update () {
-   if(health<=0){
-       health = 0;
+    
+    //do this if the player dies
+   if(lives<=0){
+       play = 0
+       lives = 0;
        var text = "YOU HAVE DIED, Click Space to Restart";
     var style = { font: "40px Cursive", fill: "black", align: "center" };
        var text2 = "Your Score: " + score ;
@@ -338,41 +382,65 @@ function update () {
        
        
    }
-  if(pauseButton.isDown){
-      location.href='';
+    //allow the user to restart with the space button if he is dead
+  if(restartButton.isDown){
+      
+      if (play == 0) 
+      {
+    // Restart
+          location.href='';
+      } else 
+      {
+    // Do nothing!
+    
+      }
+      
   }
   
+    //add the hero to the collision handler
     game.physics.arcade.collide(hero, group, collisionHandler, null, this);
-    
+    game.physics.arcade.collide(bullets, group, collisionBulletHandler, null, this);
     game.physics.arcade.collide(group, group);
     
     //set the hero's speed to 0 initially
     hero.body.velocity.x = 0;
     hero.body.velocity.y = 0;
     
+    //bullets
+    if (game.input.activePointer.isDown)
+    {
+        //  Boom!
+        fire();
+    }
+    hero.rotation = game.physics.arcade.angleToPointer(hero);
 //change direction and speed of the hero
+   
     
+    
+  
      if (leftKey.isDown)
     {
-        hero.angle -= 4;
+        hero.body.velocity.x = -350;
+        hero.animations.play('move', 10, true);
     }
     else if (rightKey.isDown)
     {
-        hero.angle += 4;
+       hero.body.velocity.x = 350;
+        hero.animations.play('move', 10, true);
     }
 
     if (upKey.isDown)
     {
-        //  The speed we'll travel at
-        currentSpeed = 300;
+        hero.body.velocity.y = -350;
         
-        hero.animations.play('move', 5, true);
+        hero.animations.play('move', 10, true);
          
     }else if(downKey.isDown){
-        currentSpeed = 0;
+        hero.body.velocity.y = 350;
         
-        hero.animations.play('move', 5, true);
+        hero.animations.play('move', 10, true);
     }
+    
     else
     {
         if (currentSpeed > 0)
@@ -387,6 +455,7 @@ function update () {
     {
         game.physics.arcade.velocityFromRotation(hero.rotation, currentSpeed, hero.body.velocity);
     }
+    
 
     land.tilePosition.x = -game.camera.x;
     land.tilePosition.y = -game.camera.y;
@@ -395,9 +464,62 @@ function update () {
    
     
 }
+
+ function collisionBulletHandler (bullet, minion) {
+     if(minion.frame == 30)
+     {
+         if(play==1){
+             bossHealth = bossHealth - 2 ;
+             if(bossHealth == 0){
+             minion.kill();
+             }
+         }
+         bullet.kill();
+     }
+     else if(minion.frame == 20)
+     {
+         if(play==1){
+            die = game.add.sprite(minion.x, minion.y, 'zombieDie', 5);
+            die.animations.add('die');
+            die.animations.play('die', 15, true);
+            setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
+            //play the zombie dying sound
+            zombieDieGirl.play();
+             minion.kill();
+         }
+         bullet.kill();
+     }
+     else if(minion.frame == 25)
+     {
+         if(play==1){
+             //play the zombie dying sound
+            zombieDieGuy.play();
+            die = game.add.sprite(minion.x, minion.y, 'zombieDie', 5);
+            die.animations.add('die');
+            die.animations.play('die', 15, true);
+             minion.kill();
+         }
+         bullet.kill();
+     }
+     else if(minion.frame == 17)
+     {
+            bullet.kill();
+     }
+     else if(minion.frame == 18)
+     {
+             bullet.kill();
+         
+     }
+     else
+     {
+         setTimeout(function(){ bullet.kill(); }, 10);
+         
+     }
+ }
+  
 function collisionHandler (player, veg) {
 
-    //  If the player collides with the innocents then they get eaten :)
+    //  If the player collides with the innocents, they are saved
     //  The Innocents frame ID is 17
             
     if (veg.frame == 17)
@@ -412,6 +534,7 @@ function collisionHandler (player, veg) {
         }
         
     }
+    //innocent angel id is 18
     else if(veg.frame == 18)
     {
          if (play == 1)
@@ -420,34 +543,31 @@ function collisionHandler (player, veg) {
            cheer.play();
            veg.kill();
            innocentsLeft--;
-            score = score + 25;
+            score = score + 35;
         }
         
     }
+    //boss id is 30
     else if(veg.frame == 30)
     {
          if (play == 1)
         {
             player.kill();
-            health -= 100;
-            if(health>0)
-            {
-            player.revive();
-            }
             veg.kill();
+            setTimeout(function(){ player.revive();}, 2000);
+            lives--;
         }
         
         
     }
+    //zombie girl ID is 20
     else if(veg.frame == 20)
     {
          if (play == 1)
         {
             
             die = game.add.sprite(veg.x, veg.y, 'zombieDie', 5);
-            
             die.animations.add('die');
-            
             die.animations.play('die', 15, true);
             setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
             //play the zombie dying sound
@@ -455,16 +575,14 @@ function collisionHandler (player, veg) {
             
             
             player.kill();
-            health -= 5;
-            if(health>0)
-            {
-            player.revive();
-            }
             veg.kill();
-            
+            setTimeout(function(){ player.revive();}, 2000);
+            lives--;
             
         }
     }
+    
+    //zombie guys ID is 25
     else if(veg.frame == 25)
     {
         if (play == 1)
@@ -477,16 +595,16 @@ function collisionHandler (player, veg) {
             setTimeout(function(){ die.animations.stop('die', 15, true); }, 3000);
             veg.kill();
             player.kill();
-            health -= 10;
-            if(health>0)
-            {
-            player.revive();
-            }
+            
+            setTimeout(function(){ player.revive();}, 2000);
+            lives--;
         }
     }
+    
+    //start button's id is 40
     else if(veg.frame == 40){
         initialize.play();
-        music.play();
+        music.play('',0,1,true);
         
         button.animations.add('clicked');
         button.animations.play('clicked', 5, true);
@@ -497,6 +615,8 @@ function collisionHandler (player, veg) {
                               iButton.kill();
                              }, 1000);
     }
+    
+    //instructions button id is 45
     else if(veg.frame == 45){
         initialize.play();
         
@@ -514,63 +634,70 @@ function collisionHandler (player, veg) {
         
        
     }
+    //heath pack id is 70
     else if(veg.frame == 70){
         if(play==1){
-        health = 100;
+        lives++;
         veg.kill();
             pickup.play();
         }
     }
+    //armour pack id is 80
     else if(veg.frame == 80){
         if(play == 1){
-        health = 150;
+        lives = lives + 2;
         veg.kill();
             pickup.play();
         }
     }
-  
-    if(health<=0){
+  //if the hero dies, play this sound.
+    if(lives<=0){
         heroDie.play();
     }
     
+    //if you collect all of the innocents
     if(innocentsLeft == 0) {
         level++;
         numberOfBaddies2 = numberOfBaddies2 + 2;
-        health = 100;
         numberOfBaddies = numberOfBaddies + 2;
         innocentsLeft = 0;
         preload();
         create();
         iButton.kill();
         button.kill();
+        bossHealth = 100;
+        
         
     }
 }
 
 
+function fire () {
 
-
-function animationLooped(sprite, animation) {
-
-    if (animation.loopCount === 1)
+    if (game.time.now > nextFire && bullets.countDead() > 0)
     {
-        loopText = game.add.text(32, 64, 'Animation looped', { fill: 'white' });
-    }
-    else
-    {
-        loopText.text = 'Animation looped x2';
-        animation.loop = false;
+        nextFire = game.time.now + fireRate;
+
+        var bullet = bullets.getFirstExists(false);
+
+        bullet.reset(hero.x, hero.y);
+
+        bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 500);
     }
 
 }
 
+
+//show the rendered info on the top left corner of the screen including 
+//health remaining and survivors remaining, level and score
 function render () {
 
 	//game.debug.inputInfo(32, 32);
-    game.debug.text("" + innocentsLeft + " survivors left !", 32, 32);
-    game.debug.text("HEALTH: " + health+"%" , 32, 50);
+    game.debug.text("" + innocentsLeft + " survivors left", 32, 32);
+    game.debug.text("Lives: " + lives, 32, 50);
     game.debug.text("Level: "+level, 32, 70);
     game.debug.text("Score: "+score, 32, 90);
+    game.debug.text("Boss Health: "+bossHealth, 32, 110);
     
    
 }
