@@ -52,10 +52,11 @@ var downKey;
 var leftKey;
 var rightKey;
 var restartButton;
+var fullScreen = 0;
 
 var bullets;
 var nextFire = 0;
-var fireRate = 200;
+var fireRate = 500;
 
 //declare all variables
 var bossHealth = 100;
@@ -72,10 +73,11 @@ var group;
 var innocent;
 var innocentsLeft = 0;
 var zombiesLeft = 0;
-var minions;
-var minions2;
+var minion;
+var minion2;
 var lives = 5;
 var angels;
+var ghouliesLeft;
 
 //sound
 var music;
@@ -94,6 +96,7 @@ var iButton;
 
 var play = 0;
 var pause_label;
+var fullScreen_label;
 //dying animation variables
 var die;
 var numberOfBaddies = 5;
@@ -106,6 +109,8 @@ var score = 0;
 
     //create the game
 function create() {
+    game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+    game.input.onDown.add(gofull, this);
     
     restartButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     upKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
@@ -170,13 +175,15 @@ function create() {
     for (var i = 0; i < numberOfBaddies; i++)
     {
         //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        var minion = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'minion', 20);
+        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
         minion.name='minion'+i;
+        
         minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
         minion.body.bounce.set(1, 1);
         minion.body.collideWorldBounds = true;
         minion.animations.add('walk');
         minion.animations.play('walk', 5, true);
+       
     }
     
     
@@ -186,8 +193,9 @@ function create() {
     
     for (var i = 0; i < numberOfBaddies2; i++)
     {
-        //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        var minion2 = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'minion2', 25);
+        //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
+        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
+         
         minion2.name='minion'+i;
         minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
         minion2.body.bounce.set(1, 1);
@@ -199,12 +207,13 @@ function create() {
     
     //add the boss minion
     
-   boss = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'boss', 30);
+   boss = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'boss', 30);
    boss.anchor.setTo(0.5, 0.5);
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
    boss.animations.add('move');
    boss.animations.play('move', 5, true);
+    
 
     //  Our bullet group
     bullets = game.add.group();
@@ -290,7 +299,7 @@ function create() {
    for (var i = 0; i < 10; i++)
     {
         
-        var c = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'innocent', 17);
+        var c = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'innocent', 17);
         c.name='innocent'+i;
         c.body.immovable = true;
         c.animations.add('wave');
@@ -304,7 +313,7 @@ function create() {
     for (var i = 0; i < 10; i++)
     {
         
-        var angel = group.create(game.rnd.integerInRange(-1000, 1000), game.rnd.integerInRange(-1000, 1000), 'angels', 18);
+        var angel = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'angels', 18);
         angel.name='angel'+i;
         
         angel.body.immovable = true;
@@ -330,7 +339,6 @@ function create() {
     /*
         Code for the pause menu
     */
-    
     
     // Create a label to use as a button
     var pause_label = game.add.text(0, 0, "Pause", { font: "32px Arial", fill: "#ffffff", align: "center" });
@@ -362,12 +370,14 @@ function create() {
 //start the update function, the game loop
 function update () {
     
+    
+    
     //do this if the player dies
    if(lives<=0){
        play = 0
        lives = 0;
        var text = "YOU HAVE DIED, Click Space to Restart";
-    var style = { font: "40px Cursive", fill: "black", align: "center" };
+        var style = { font: "40px Cursive", fill: "black", align: "center" };
        var text2 = "Your Score: " + score ;
    
 
@@ -411,7 +421,12 @@ function update () {
     {
         //  Boom!
         fire();
+       // minion.forEach(game.physics.arcade.moveToPointer, game.physics.arcade, false, 200);
+       
+        
     }
+    
+    
     hero.rotation = game.physics.arcade.angleToPointer(hero);
 //change direction and speed of the hero
    
@@ -682,12 +697,15 @@ function fire () {
 
         bullet.reset(hero.x, hero.y);
 
-        bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 500);
+        bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 200);
     }
 
 }
 
+function gofull() {
+    game.scale.startFullScreen();
 
+}
 //show the rendered info on the top left corner of the screen including 
 //health remaining and survivors remaining, level and score
 function render () {
