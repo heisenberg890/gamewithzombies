@@ -697,7 +697,7 @@ function fire () {
 
         bullet.reset(hero.x, hero.y);
 
-        bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 200);
+        bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 400);
     }
 
 }
