@@ -43,6 +43,8 @@ function preload() {
     game.load.image('armour', 'assets/powerups/armour.png');
     game.load.image('pauseMenu', 'assets/menus/pauseMenu.png');
     game.load.spritesheet('zombieDie', 'assets/sprites/zombieDying.png', 100, 100);
+    game.load.spritesheet('zombieGuyDie', 'assets/sprites/zombieGuyDying.png', 100, 100);
+    game.load.spritesheet('bossDie', 'assets/sprites/bossDying.png', 200, 200);
     game.load.image('bullet', 'assets/sprites/bullet.png');
     
 }
@@ -56,9 +58,11 @@ var fullScreen = 0;
 
 var bullets;
 var nextFire = 0;
-var fireRate = 500;
+var fireRate = 20;
 
 //declare all variables
+var zombieHealth = 100;
+var zombie2Health = 100;
 var bossHealth = 100;
 var pickup;
 var cheer
@@ -99,6 +103,8 @@ var pause_label;
 var fullScreen_label;
 //dying animation variables
 var die;
+var bossDie;
+
 var numberOfBaddies = 5;
 var numberOfBaddies2 = 0;
 var numberOfBosses = 0;
@@ -109,8 +115,8 @@ var score = 0;
 
     //create the game
 function create() {
-    game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
-    game.input.onDown.add(gofull, this);
+    //game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+    //game.input.onDown.add(gofull, this);
     
     restartButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     upKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
@@ -183,6 +189,7 @@ function create() {
         minion.body.collideWorldBounds = true;
         minion.animations.add('walk');
         minion.animations.play('walk', 5, true);
+        minion.body.immovable = 'true';
        
     }
     
@@ -195,13 +202,14 @@ function create() {
     {
         //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
         minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
-         
         minion2.name='minion'+i;
         minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
         minion2.body.bounce.set(1, 1);
+        minion2.body.immovable = 'true';
         minion2.body.collideWorldBounds = true;
         minion2.animations.add('walk');
         minion2.animations.play('walk', 5, true);
+        
     }
     
     
@@ -211,6 +219,7 @@ function create() {
    boss.anchor.setTo(0.5, 0.5);
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
+    boss.body.immovable = 'true';
    boss.animations.add('move');
    boss.animations.play('move', 5, true);
     
@@ -371,6 +380,16 @@ function create() {
 function update () {
     
     
+    if(bossHealth <=0){
+    setTimeout(function(){ bossHealth = 100;}, 1000);
+    }
+    if(zombieHealth <=0){
+    setTimeout(function(){ zombieHealth = 100;}, 1000);
+    }
+    if(zombie2Health <=0){
+    setTimeout(function(){ zombie2Health = 100;}, 1000);
+    }
+    
     
     //do this if the player dies
    if(lives<=0){
@@ -486,34 +505,59 @@ function update () {
          if(play==1){
              bossHealth = bossHealth - 2 ;
              if(bossHealth == 0){
+                 
+                 die = game.add.sprite(minion.x - 100, minion.y - 100, 'bossDie', 5);
+            die.animations.add('die');
+            die.animations.play('die', 10, true);
+            setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
+            //play the zombie dying sound
              minion.kill();
+                 score = score + 100;
+                 
              }
          }
          bullet.kill();
      }
      else if(minion.frame == 20)
      {
-         if(play==1){
-            die = game.add.sprite(minion.x, minion.y, 'zombieDie', 5);
-            die.animations.add('die');
-            die.animations.play('die', 15, true);
-            setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
-            //play the zombie dying sound
-            zombieDieGirl.play();
-             minion.kill();
-         }
+       
+            
+            zombieHealth = zombieHealth - 25;
+            
+            if(zombieHealth == 0)
+            {
+                 if(play==1)
+                 {
+                    die = game.add.sprite(minion.x, minion.y, 'zombieDie', 5);
+                    die.animations.add('die');
+                    die.animations.play('die', 15, true);
+                    setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
+                    //play the zombie dying sound
+                    zombieDieGirl.play();
+                     minion.kill();
+                     zombieHealth = 100;
+                     score = score + 20;
+                 }
+            }
          bullet.kill();
      }
      else if(minion.frame == 25)
      {
+         zombie2Health = zombie2Health - 10;
+            
+            if(zombie2Health == 0)
+            {
          if(play==1){
              //play the zombie dying sound
             zombieDieGuy.play();
-            die = game.add.sprite(minion.x, minion.y, 'zombieDie', 5);
+            die = game.add.sprite(minion.x, minion.y, 'zombieGuyDie', 5);
             die.animations.add('die');
             die.animations.play('die', 15, true);
              minion.kill();
+             zombie2Health = 100;
+             score = score + 50;
          }
+            }
          bullet.kill();
      }
      else if(minion.frame == 17)
@@ -567,6 +611,15 @@ function collisionHandler (player, veg) {
     {
          if (play == 1)
         {
+            
+            
+            die = game.add.sprite(veg.x - 100, veg.y - 100, 'bossDie', 5);
+            die.animations.add('die');
+            die.animations.play('die', 10, true);
+            setTimeout(function(){ die.animations.stop('die', 5, true); die.kill(); }, 800);
+            //play the zombie dying sound
+            
+            
             player.kill();
             veg.kill();
             setTimeout(function(){ player.revive();}, 2000);
@@ -604,7 +657,7 @@ function collisionHandler (player, veg) {
         {
             //play the zombie dying sound
             zombieDieGuy.play();
-            die = game.add.sprite(veg.x, veg.y, 'zombieDie', 5);
+            die = game.add.sprite(veg.x, veg.y, 'zombieGuyDie', 5);
             die.animations.add('die');
             die.animations.play('die', 15, true);
             setTimeout(function(){ die.animations.stop('die', 15, true); }, 3000);
@@ -677,10 +730,88 @@ function collisionHandler (player, veg) {
         numberOfBaddies = numberOfBaddies + 2;
         innocentsLeft = 0;
         preload();
-        create();
-        iButton.kill();
-        button.kill();
+        //create();
+        //iButton.kill();
+        //button.kill();
         bossHealth = 100;
+        
+        
+         //add the minions to the collision group
+    
+    //minions = game.add.group();
+    //minions.enableBody = true;
+
+    for (var i = 0; i < numberOfBaddies; i++)
+    {
+        //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
+        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
+        minion.name='minion'+i;
+        
+        minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        minion.body.bounce.set(1, 1);
+        minion.body.collideWorldBounds = true;
+        minion.animations.add('walk');
+        minion.animations.play('walk', 5, true);
+        minion.body.immovable = 'true';
+       
+    }
+    
+    
+    //add the minions to the collision group
+   // minions2 = game.add.group();
+    //minions2.enableBody = true;
+    
+    for (var i = 0; i < numberOfBaddies2; i++)
+    {
+        //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
+        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
+        minion2.name='minion'+i;
+        minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        minion2.body.bounce.set(1, 1);
+        minion2.body.immovable = 'true';
+        minion2.body.collideWorldBounds = true;
+        minion2.animations.add('walk');
+        minion2.animations.play('walk', 5, true);
+        
+    }
+    
+    
+    //add the boss minion
+    
+   boss = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'boss', 30);
+   boss.anchor.setTo(0.5, 0.5);
+   boss.enablebody = true;
+   boss.body.collideWorldBounds = true;
+    boss.body.immovable = 'true';
+   boss.animations.add('move');
+   boss.animations.play('move', 5, true);
+    
+//make the innocent people to be picked up and add animation
+   for (var i = 0; i < 10; i++)
+    {
+        
+        var c = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'innocent', 17);
+        c.name='innocent'+i;
+        c.body.immovable = true;
+        c.animations.add('wave');
+        c.anchor.setTo(0.5, 0.5);
+        c.animations.play('wave', game.rnd.integerInRange(1, 20), true);
+        innocentsLeft++;
+        
+    }
+    
+    //make the innocent people to be picked up and add animation
+    for (var i = 0; i < 10; i++)
+    {
+        
+        var angel = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'angels', 18);
+        angel.name='angel'+i;
+        
+        angel.body.immovable = true;
+        angel.animations.add('walk');
+        angel.animations.play('walk', game.rnd.integerInRange(5, 10), true);
+        innocentsLeft++;
+    }
         
         
     }
@@ -715,7 +846,9 @@ function render () {
     game.debug.text("Lives: " + lives, 32, 50);
     game.debug.text("Level: "+level, 32, 70);
     game.debug.text("Score: "+score, 32, 90);
-    game.debug.text("Boss Health: "+bossHealth, 32, 110);
+    //game.debug.text("Boss Health: "+bossHealth, 32, 110);
+    //game.debug.text("Zombie Girl Health: "+zombieHealth, 32, 130);
+    //game.debug.text("Zombie Guy Health: "+zombie2Health, 32, 150);
     
    
 }
