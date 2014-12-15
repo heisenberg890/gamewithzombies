@@ -1,0 +1,18 @@
+body{
+    margin-right: auto !important;
+    margin-left: auto !important;
+    margin-top: 5px !important;
+    text-align: center !important;
+    background: #333333 !important;
+}
+canvas{
+    margin-left:auto;
+    margin-right:auto;
+    margin-top:40px;
+    border:white dashed 2px !important;
+    padding:10px;
+}
+.instructions{
+    color:white !important;
+    margin-top:10px;
+}

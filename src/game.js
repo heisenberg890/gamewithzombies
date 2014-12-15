@@ -58,7 +58,7 @@ var fullScreen = 0;
 
 var bullets;
 var nextFire = 0;
-var fireRate = 20;
+var fireRate = 100;
 
 //declare all variables
 var zombieHealth = 100;
@@ -91,7 +91,7 @@ var zombieDieGuy;
 var initialize;
 var savior;
 var zombieSound;
-
+var highScore = 0;
 
 var button;
 var iButton;
@@ -110,6 +110,8 @@ var numberOfBaddies2 = 0;
 var numberOfBosses = 0;
 
 var score = 0;
+
+var baddies;
 
 
 
@@ -178,39 +180,10 @@ function create() {
     //minions = game.add.group();
     //minions.enableBody = true;
 
-    for (var i = 0; i < numberOfBaddies; i++)
-    {
-        //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
-        minion.name='minion'+i;
-        
-        minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion.body.bounce.set(1, 1);
-        minion.body.collideWorldBounds = true;
-        minion.animations.add('walk');
-        minion.animations.play('walk', 5, true);
-        minion.body.immovable = 'true';
-       
-    }
     
     
-    //add the minions to the collision group
-   // minions2 = game.add.group();
-    //minions2.enableBody = true;
     
-    for (var i = 0; i < numberOfBaddies2; i++)
-    {
-        //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
-        minion2.name='minion'+i;
-        minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion2.body.bounce.set(1, 1);
-        minion2.body.immovable = 'true';
-        minion2.body.collideWorldBounds = true;
-        minion2.animations.add('walk');
-        minion2.animations.play('walk', 5, true);
-        
-    }
+   
     
     
     //add the boss minion
@@ -220,6 +193,8 @@ function create() {
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
     boss.body.immovable = 'true';
+    boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        boss.body.bounce.set(1, 1);
    boss.animations.add('move');
    boss.animations.play('move', 5, true);
     
@@ -228,7 +203,7 @@ function create() {
     bullets = game.add.group();
     bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    bullets.createMultiple(30, 'bullet', 0, false);
+    bullets.createMultiple(50, 'bullet', 0, false);
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 0.5);
     bullets.setAll('outOfBoundsKill', true);
@@ -373,12 +348,47 @@ function create() {
         }
             
     };
+    
+  
+    for (var i = 0; i < numberOfBaddies; i++)
+    {
+        //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
+        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
+        minion.name='minion'+i;
+        
+        minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        minion.body.bounce.set(1, 1);
+        minion.body.collideWorldBounds = true;
+        minion.animations.add('walk');
+        minion.animations.play('walk', 5, true);
+        minion.body.immovable = 'true';
+       
+    }
+    
+     //add the minions to the collision group
+   // minions2 = game.add.group();
+    //minions2.enableBody = true;
+    
+    for (var i = 0; i < numberOfBaddies2; i++)
+    {
+        //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
+        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
+        minion2.name='minion'+i;
+        minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        minion2.body.bounce.set(1, 1);
+        minion2.body.immovable = 'true';
+        minion2.body.collideWorldBounds = true;
+        minion2.animations.add('walk');
+        minion2.animations.play('walk', 5, true);
+        
+    }
+    
    
 }
 
 //start the update function, the game loop
 function update () {
-    
+   
     
     if(bossHealth <=0){
     setTimeout(function(){ bossHealth = 100;}, 1000);
@@ -393,11 +403,15 @@ function update () {
     
     //do this if the player dies
    if(lives<=0){
+       if(score > highScore){
+           highScore = score;
+       }
        play = 0
        lives = 0;
        var text = "YOU HAVE DIED, Click Space to Restart";
         var style = { font: "40px Cursive", fill: "black", align: "center" };
        var text2 = "Your Score: " + score ;
+       var text3 = "High Score: " + highScore ;
    
 
     var x = game.add.text(0, 0, text, style);
@@ -408,6 +422,7 @@ function update () {
        y.anchor.setTo(0.5, 0.5);
         y.fixedToCamera = true;
         y.cameraOffset.setTo(480, 500);
+       
        
        
    }
@@ -726,8 +741,8 @@ function collisionHandler (player, veg) {
     //if you collect all of the innocents
     if(innocentsLeft == 0) {
         level++;
-        numberOfBaddies2 = numberOfBaddies2 + 2;
-        numberOfBaddies = numberOfBaddies + 2;
+        numberOfBaddies2 = numberOfBaddies2 + 4;
+        numberOfBaddies = numberOfBaddies + 4;
         innocentsLeft = 0;
         preload();
         //create();
@@ -777,14 +792,18 @@ function collisionHandler (player, veg) {
     
     
     //add the boss minion
-    
+    for(var i = 0; i<=level; i++){
    boss = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'boss', 30);
    boss.anchor.setTo(0.5, 0.5);
+    
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
     boss.body.immovable = 'true';
+        boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        boss.body.bounce.set(1, 1);
    boss.animations.add('move');
    boss.animations.play('move', 5, true);
+    }
     
 //make the innocent people to be picked up and add animation
    for (var i = 0; i < 10; i++)
