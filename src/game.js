@@ -21,14 +21,15 @@ function preload() {
 //load the images
     //game.load.image('hero', 'assets/sprites/bus.png');
     game.load.image('road', 'assets/backgrounds/A-road.jpg');
+    game.load.image('road2', 'assets/backgrounds/grass.jpg');
     game.load.spritesheet('innocent', 'assets/sprites/swordguy.png', 48, 32);
     game.load.spritesheet('ibutton', 'assets/buttons/iButton.png', 262, 62);
     game.load.spritesheet('button', 'assets/buttons/startButton.png', 264, 80);
-    game.load.spritesheet('hero', 'assets/sprites/links.png', 80, 40);
-    game.load.spritesheet('minion', 'assets/sprites/zombieChick.png', 90, 69);
-    game.load.spritesheet('minion2', 'assets/sprites/zombieDudes.png', 90, 93);
+    game.load.spritesheet('hero', 'assets/sprites/mainHero.png', 72, 32);
+    game.load.spritesheet('minion', 'assets/sprites/zombieChicker.png', 65, 37);
+    game.load.spritesheet('minion2', 'assets/sprites/zombieduder.png', 65, 22);
     game.load.spritesheet('angels', 'assets/sprites/cheer.png', 65, 100);
-    game.load.spritesheet('boss', 'assets/sprites/Zombie.png', 158, 255);
+    game.load.spritesheet('boss', 'assets/sprites/bossZomb.png', 208, 130);
     game.load.audio('theme', ['assets/audio/theme.mp3', 'assets/audio/theme.ogg']);
     game.load.audio('heroDieAudio', ['assets/audio/heroDie.mp3', 'assets/audio/heroDie.ogg']);
     game.load.audio('zombieDieGirl', ['assets/audio/zombieDieGirl.mp3', 'assets/audio/zombieDieGirl.ogg']);
@@ -46,6 +47,7 @@ function preload() {
     game.load.spritesheet('zombieGuyDie', 'assets/sprites/zombieGuyDying.png', 100, 100);
     game.load.spritesheet('bossDie', 'assets/sprites/bossDying.png', 200, 200);
     game.load.image('bullet', 'assets/sprites/bullet.png');
+    game.load.audio('bulletSound', ['assets/audio/gun.mp3', 'assets/audio/gun.ogg']);
     
 }
 //declare the arrow keys
@@ -59,6 +61,7 @@ var fullScreen = 0;
 var bullets;
 var nextFire = 0;
 var fireRate = 100;
+var bulletSound;
 
 //declare all variables
 var zombieHealth = 100;
@@ -77,8 +80,8 @@ var group;
 var innocent;
 var innocentsLeft = 0;
 var zombiesLeft = 0;
-var minion;
-var minion2;
+var minion = [];
+var minion2 = [];
 var lives = 5;
 var angels;
 var ghouliesLeft;
@@ -106,7 +109,7 @@ var die;
 var bossDie;
 
 var numberOfBaddies = 5;
-var numberOfBaddies2 = 0;
+var numberOfBaddies2 = 1;
 var numberOfBosses = 0;
 
 var score = 0;
@@ -114,6 +117,8 @@ var score = 0;
 var baddies;
 
 
+//gun stuff
+var multiGunPowerUp = 0;
 
     //create the game
 function create() {
@@ -134,6 +139,7 @@ function create() {
     
     //add all of the audio files to the game
     zombieDieGuy = game.add.audio('zombieDieGuy');
+    bulletSound = game.add.audio('bulletSound');
     cheer = game.add.audio('cheer');
     cheer.volume = 0.2;
     pickup = game.add.audio('pickup');
@@ -193,10 +199,10 @@ function create() {
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
     boss.body.immovable = 'true';
-    boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        boss.body.bounce.set(1, 1);
+    //boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        //boss.body.bounce.set(1, 1);
    boss.animations.add('move');
-   boss.animations.play('move', 5, true);
+   boss.animations.play('move', 10, true);
     
 
     //  Our bullet group
@@ -280,7 +286,7 @@ function create() {
     
     
     //make the innocent people to be picked up and add animation
-   for (var i = 0; i < 10; i++)
+   for (var i = 0; i < 1; i++)
     {
         
         var c = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'innocent', 17);
@@ -294,7 +300,7 @@ function create() {
     }
     
     //make the innocent people to be picked up and add animation
-    for (var i = 0; i < 10; i++)
+    for (var i = 0; i < 1; i++)
     {
         
         var angel = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'angels', 18);
@@ -349,19 +355,19 @@ function create() {
             
     };
     
-  
     for (var i = 0; i < numberOfBaddies; i++)
     {
         //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
-        minion.name='minion'+i;
+        minion[i] = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
+        minion[i].name='minion'+i;
         
-        minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion.body.bounce.set(1, 1);
-        minion.body.collideWorldBounds = true;
-        minion.animations.add('walk');
-        minion.animations.play('walk', 5, true);
-        minion.body.immovable = 'true';
+        //minion[i].body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        //minion[i].body.bounce.set(1, 1);
+        minion[i].body.collideWorldBounds = true;
+        minion[i].animations.add('walk');
+        minion[i].animations.play('walk', 10, true);
+        //minion[i].body.immovable = 'true';
+        
        
     }
     
@@ -372,14 +378,14 @@ function create() {
     for (var i = 0; i < numberOfBaddies2; i++)
     {
         //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
-        minion2.name='minion'+i;
-        minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion2.body.bounce.set(1, 1);
-        minion2.body.immovable = 'true';
-        minion2.body.collideWorldBounds = true;
-        minion2.animations.add('walk');
-        minion2.animations.play('walk', 5, true);
+        minion2[i] = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
+        minion2[i].name='minion2'+i;
+        //minion2[i].body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        //minion2[i].body.bounce.set(1, 1);
+        //minion2[i].body.immovable = 'true';
+        minion2[i].body.collideWorldBounds = true;
+        minion2[i].animations.add('walk');
+        minion2[i].animations.play('walk', 10, true);
         
     }
     
@@ -388,7 +394,13 @@ function create() {
 
 //start the update function, the game loop
 function update () {
-   
+  if(play == 1){
+    for(var i = 0; i<minion.length;i++){minion[i].rotation = this.game.physics.arcade.moveToObject(minion[i], hero, 100);}
+    for(var i = 0; i<minion2.length;i++){minion2[i].rotation = this.game.physics.arcade.moveToObject(minion2[i], hero, 100);}
+  
+    
+   boss.rotation = this.game.physics.arcade.moveToObject(boss, hero, 200);
+  }
     
     if(bossHealth <=0){
     setTimeout(function(){ bossHealth = 100;}, 1000);
@@ -403,15 +415,14 @@ function update () {
     
     //do this if the player dies
    if(lives<=0){
-       if(score > highScore){
-           highScore = score;
-       }
+       
        play = 0
        lives = 0;
        var text = "YOU HAVE DIED, Click Space to Restart";
         var style = { font: "40px Cursive", fill: "black", align: "center" };
        var text2 = "Your Score: " + score ;
        var text3 = "High Score: " + highScore ;
+       hero.kill();
    
 
     var x = game.add.text(0, 0, text, style);
@@ -518,7 +529,7 @@ function update () {
      if(minion.frame == 30)
      {
          if(play==1){
-             bossHealth = bossHealth - 2 ;
+             bossHealth = bossHealth - 5 ;
              if(bossHealth == 0){
                  
                  die = game.add.sprite(minion.x - 100, minion.y - 100, 'bossDie', 5);
@@ -537,7 +548,7 @@ function update () {
      {
        
             
-            zombieHealth = zombieHealth - 25;
+            zombieHealth = zombieHealth - 50;
             
             if(zombieHealth == 0)
             {
@@ -558,7 +569,7 @@ function update () {
      }
      else if(minion.frame == 25)
      {
-         zombie2Health = zombie2Health - 10;
+         zombie2Health = zombie2Health - 100;
             
             if(zombie2Health == 0)
             {
@@ -639,6 +650,9 @@ function collisionHandler (player, veg) {
             veg.kill();
             setTimeout(function(){ player.revive();}, 2000);
             lives--;
+            multiGunPowerUp = 0;
+            play = 0;
+            setTimeout(function(){ play = 1}, 10000);
         }
         
         
@@ -661,6 +675,9 @@ function collisionHandler (player, veg) {
             veg.kill();
             setTimeout(function(){ player.revive();}, 2000);
             lives--;
+            multiGunPowerUp = 0;
+            play = 0;
+            setTimeout(function(){ play = 1}, 10000);
             
         }
     }
@@ -678,9 +695,12 @@ function collisionHandler (player, veg) {
             setTimeout(function(){ die.animations.stop('die', 15, true); }, 3000);
             veg.kill();
             player.kill();
+            multiGunPowerUp = 0;
             
             setTimeout(function(){ player.revive();}, 2000);
             lives--;
+            play = 0;
+            setTimeout(function(){ play = 1}, 10000);
         }
     }
     
@@ -728,9 +748,12 @@ function collisionHandler (player, veg) {
     //armour pack id is 80
     else if(veg.frame == 80){
         if(play == 1){
-        lives = lives + 2;
+        //lives = lives + 2;
         veg.kill();
             pickup.play();
+            multiGunPowerUp ++;
+             
+            
         }
     }
   //if the hero dies, play this sound.
@@ -741,6 +764,7 @@ function collisionHandler (player, veg) {
     //if you collect all of the innocents
     if(innocentsLeft == 0) {
         level++;
+        
         numberOfBaddies2 = numberOfBaddies2 + 4;
         numberOfBaddies = numberOfBaddies + 4;
         innocentsLeft = 0;
@@ -759,15 +783,16 @@ function collisionHandler (player, veg) {
     for (var i = 0; i < numberOfBaddies; i++)
     {
         //var minion = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
-        minion.name='minion'+i;
+        minion[i] = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion', 20);
+        minion[i].name='minion'+i;
         
-        minion.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion.body.bounce.set(1, 1);
-        minion.body.collideWorldBounds = true;
-        minion.animations.add('walk');
-        minion.animations.play('walk', 5, true);
-        minion.body.immovable = 'true';
+       //  minion[i].body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+       
+        //minion[i].body.bounce.set(1, 1);
+        minion[i].body.collideWorldBounds = true;
+        minion[i].animations.add('walk');
+        minion[i].animations.play('walk', 5, true);
+        //minion[i].body.immovable = 'true';
        
     }
     
@@ -779,14 +804,14 @@ function collisionHandler (player, veg) {
     for (var i = 0; i < numberOfBaddies2; i++)
     {
         //var minion2 = minions.create(game.world.randomX, game.world.randomY, 'minion');
-        minion2 = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
-        minion2.name='minion'+i;
-        minion2.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        minion2.body.bounce.set(1, 1);
-        minion2.body.immovable = 'true';
-        minion2.body.collideWorldBounds = true;
-        minion2.animations.add('walk');
-        minion2.animations.play('walk', 5, true);
+        minion2[i] = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'minion2', 25);
+        minion2[i].name='minion'+i;
+        //minion2[i].body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+        //minion2[i].body.bounce.set(1, 1);
+        //minion2[i].body.immovable = 'true';
+        minion2[i].body.collideWorldBounds = true;
+        minion2[i].animations.add('walk');
+        minion2[i].animations.play('walk', 5, true);
         
     }
     
@@ -798,15 +823,15 @@ function collisionHandler (player, veg) {
     
    boss.enablebody = true;
    boss.body.collideWorldBounds = true;
-    boss.body.immovable = 'true';
-        boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
-        boss.body.bounce.set(1, 1);
+   boss.body.immovable = 'true';
+   boss.body.velocity.set(game.rnd.integerInRange(10, 200), game.rnd.integerInRange(10, 200));
+   boss.body.bounce.set(1, 1);
    boss.animations.add('move');
-   boss.animations.play('move', 5, true);
+   boss.animations.play('move', 10, true);
     }
     
 //make the innocent people to be picked up and add animation
-   for (var i = 0; i < 10; i++)
+   for (var i = 0; i < 5; i++)
     {
         
         var c = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'innocent', 17);
@@ -820,7 +845,7 @@ function collisionHandler (player, veg) {
     }
     
     //make the innocent people to be picked up and add animation
-    for (var i = 0; i < 10; i++)
+    for (var i = 0; i < 5; i++)
     {
         
         var angel = group.create(game.rnd.integerInRange(-900, 900), game.rnd.integerInRange(-900, 900), 'angels', 18);
@@ -841,14 +866,34 @@ function fire () {
 
     if (game.time.now > nextFire && bullets.countDead() > 0)
     {
+    bulletSound.play();
         nextFire = game.time.now + fireRate;
 
         var bullet = bullets.getFirstExists(false);
 
         bullet.reset(hero.x, hero.y);
-
+        bullet.lifespan=300; 
         bullet.rotation = game.physics.arcade.moveToPointer(bullet, 1000, game.input.activePointer, 400);
+        
+        if(multiGunPowerUp == 1){
+        var bullet2 = bullets.getFirstExists(false);
+
+        bullet2.reset(hero.x+20, hero.y+5);
+            bullet.lifespan=400; 
+        bullet2.rotation = game.physics.arcade.moveToPointer(bullet2, 2000, game.input.activePointer, 400);
+        
+        
+    
+        var bullet3 = bullets.getFirstExists(false);
+
+        bullet3.reset(hero.x-20, hero.y-5);
+            bullet.lifespan=400; 
+        bullet3.rotation = game.physics.arcade.moveToPointer(bullet3, 2000, game.input.activePointer, 400);
+        }
+        
+        
     }
+    
 
 }
 
@@ -865,7 +910,7 @@ function render () {
     game.debug.text("Lives: " + lives, 32, 50);
     game.debug.text("Level: "+level, 32, 70);
     game.debug.text("Score: "+score, 32, 90);
-    //game.debug.text("Boss Health: "+bossHealth, 32, 110);
+    game.debug.text("Boss Health: "+bossHealth, 32, 110);
     //game.debug.text("Zombie Girl Health: "+zombieHealth, 32, 130);
     //game.debug.text("Zombie Guy Health: "+zombie2Health, 32, 150);
     
